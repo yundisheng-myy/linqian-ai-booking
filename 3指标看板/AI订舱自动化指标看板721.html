@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI订舱自动化指标看板</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; padding: 24px; }
+h1 { text-align: center; font-size: 22px; margin-bottom: 8px; color: #1a1a2e; }
+.subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 24px; }
+.card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 24px; margin-bottom: 24px; }
+.card h2 { font-size: 16px; color: #4472C4; margin-bottom: 16px; border-left: 4px solid #4472C4; padding-left: 12px; }
+.chart { width: 100%; height: 400px; }
+.kpi-row { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.kpi { flex: 1; min-width: 140px; background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
+.kpi .value { font-size: 28px; font-weight: 700; color: #4472C4; }
+.kpi .label { font-size: 12px; color: #888; margin-top: 4px; }
+.kpi .trend { font-size: 12px; margin-top: 4px; }
+.trend.up { color: #52c41a; }
+.trend.down { color: #ff4d4f; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #4472C4; color: #fff; padding: 8px 12px; text-align: center; }
+td { padding: 8px 12px; text-align: center; border-bottom: 1px solid #eee; }
+tr:hover td { background: #f0f5ff; }
+.note { font-size: 12px; color: #999; margin-top: 12px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<h1>AI订舱自动化指标看板</h1>
+<div class="subtitle">数据来源：AI航空订舱&录单 + AI航空订舱New | GOS底表：cncdm.dwd_csn_exp_lh_gos_ord_df(ds=20260721) | 数据截止 2026-07-21</div>
+
+<div class="kpi-row">
+<div class="kpi"><div class="value">2,419</div><div class="label">累计自动化任务数</div></div>
+<div class="kpi"><div class="value">2,130</div><div class="label">累计自动化成功数</div></div>
+<div class="kpi"><div class="value">35.7%</div><div class="label">7月任务渗透率</div><div class="trend down">&#x2193; -5.9pp vs 6月</div></div>
+<div class="kpi"><div class="value">86.0%</div><div class="label">7月任务成功率</div><div class="trend down">&#x2193; -7.8pp vs 6月</div></div>
+</div>
+
+<!-- 图表1：月度混合图 -->
+<div class="card">
+<h2>图表1：月度自动化指标趋势（3-7月）</h2>
+<div id="chart1" class="chart"></div>
+</div>
+
+<!-- 图表2：航线×周 渗透率趋势（只看百分比） -->
+<div class="card">
+<h2>图表2：航线×周 订舱/录单渗透率趋势（近6周）</h2>
+<div id="chart2_booking" class="chart" style="height:340px;"></div>
+<div id="chart2_awb" class="chart" style="height:340px; margin-top:12px;"></div>
+</div>
+
+<!-- 图表3：航线×周 成功率趋势 -->
+<div class="card">
+<h2>图表3：航线×周 订舱/录单成功率趋势（近6周）</h2>
+<div id="chart3_booking" class="chart" style="height:340px;"></div>
+<div id="chart3_awb" class="chart" style="height:340px; margin-top:12px;"></div>
+</div>
+
+<!-- 图表4：PVG-AMS 任务数明细 -->
+<div class="card">
+<h2>图表4：PVG-AMS 任务数明细（近6周）</h2>
+<div id="chart3" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表5：PVG-LGG 任务数明细 -->
+<div class="card">
+<h2>图表5：PVG-LGG 任务数明细（近6周）</h2>
+<div id="chart4" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表6：PVG-MAD 任务数明细 -->
+<div class="card">
+<h2>图表6：PVG-MAD 任务数明细（近6周）</h2>
+<div id="chart5" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表7：SZX-NLU 任务数明细 -->
+<div class="card">
+<h2>图表7：SZX-NLU 任务数明细（近6周）</h2>
+<div id="chart6" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表8：PVG-NLU 任务数明细 -->
+<div class="card">
+<h2>图表8：PVG-NLU 任务数明细（近6周）</h2>
+<div id="chart7" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 6月 vs 7月 归因分析 -->
+<div class="card">
+<h2>6月 vs 7月 指标下降归因</h2>
+<p class="note" style="margin-top:0; margin-bottom:14px;">
+整体看：7月任务渗透率 35.7%（较6月 41.6% 下降 5.9pp），7月任务成功率 86.0%（较6月 93.8% 下降 7.8pp）。下降由"分母结构变化 + 高渗透航线回落 + 新上线航线拖累成功率"三方面叠加造成，明细如下。
+</p>
+
+<h3 style="font-size:14px; color:#333; margin:8px 0;">① 分航线渗透率对比（AI∩GOS / GOS）</h3>
+<table>
+<thead><tr><th>航线</th><th>6月渗透率</th><th>7月渗透率</th><th>变化</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>PVG-AMS</td><td>94.3%</td><td>82.6%</td><td style="color:#ff4d4f;">-11.7pp</td><td>高渗透航线回落</td></tr>
+<tr><td>PVG-MAD</td><td>50.9%</td><td>38.0%</td><td style="color:#ff4d4f;">-12.8pp</td><td>录单渗透明显回落</td></tr>
+<tr><td>PVG-LGG</td><td>61.5%</td><td>46.4%</td><td style="color:#ff4d4f;">-15.2pp</td><td>订舱渗透大幅回落</td></tr>
+<tr><td>PVG-NLU</td><td>0%</td><td>22.0%</td><td style="color:#52c41a;">+22.0pp</td><td>7月新上线</td></tr>
+<tr><td>SZX-NLU</td><td>0%</td><td>22.5%</td><td style="color:#52c41a;">+22.5pp</td><td>7月新上线</td></tr>
+</tbody>
+</table>
+<p class="note">
+非自动化航线占 GOS 比重：6月 18.7%（310/1662）→ 7月 21.3%（216/1016），更多单量落在未上线航线，直接摊薄整体渗透率；同时三条主力高渗透航线（PVG-AMS/MAD/LGG）各回落 12~15pp 是整体渗透率下降的主因。新上线的 PVG-NLU、SZX-NLU 渗透率尚处于爬坡期（~22%），短期内难以补足主力航线的回落。
+</p>
+
+<h3 style="font-size:14px; color:#333; margin:16px 0 8px;">② 分航线成功率与终止数对比（成功/(成功+终止)）</h3>
+<table>
+<thead><tr><th>航线</th><th>6月成功率</th><th>7月成功率</th><th>6月终止</th><th>7月终止</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>PVG-AMS</td><td>94.0%</td><td>83.2%</td><td>11</td><td>20</td><td>终止数近乎翻倍</td></tr>
+<tr><td>PVG-MAD</td><td>93.1%</td><td>89.4%</td><td>28</td><td>16</td><td>终止下降但基数收缩</td></tr>
+<tr><td>PVG-LGG</td><td>95.9%</td><td>90.5%</td><td>4</td><td>6</td><td>小幅回落</td></tr>
+<tr><td>PVG-NLU</td><td>—</td><td>30.0%</td><td>0</td><td>7</td><td>新上线，仅3单成功，重度拖累</td></tr>
+<tr><td>SZX-NLU</td><td>—</td><td>100.0%</td><td>0</td><td>0</td><td>新上线，样本小</td></tr>
+<tr><td><b>合计</b></td><td><b>93.8%</b></td><td><b>86.0%</b></td><td><b>43</b></td><td><b>49</b></td><td>终止升、成功基数缩</td></tr>
+</tbody>
+</table>
+<p class="note">
+成功率下降的核心原因：一是7月绝对终止数升至 49（6月 43），而成功分母同期从 646 收缩到 301，"分子降、终止升"共同压低成功率；二是新上线的 PVG-NLU 成功率仅 30.0%（3成功/7终止），单条航线即拉低整体约数个百分点，是7月成功率大幅回落的关键拖累项；三是 PVG-AMS 终止数从 11 升至 20，也贡献了明显跌幅。
+</p>
+
+<h3 style="font-size:14px; color:#333; margin:16px 0 8px;">③ 结论</h3>
+<p class="note">
+7月渗透率下降主要来自主力高渗透航线（PVG-AMS/MAD/LGG）集体回落 12~15pp，叠加更多单量流向尚未上线或处于爬坡期的航线；7月成功率下降主要来自绝对终止数上升、成功基数收缩，以及新上线 PVG-NLU 的低成功率拖累。建议下阶段：稳固主力航线渗透率、专项排查 PVG-AMS 终止数上升原因、加速 PVG-NLU/SZX-NLU 的成功率爬坡。
+</p>
+</div>
+
+<!-- 明细数据表 -->
+<div class="card">
+<h2>明细数据表</h2>
+<table>
+<thead><tr><th>月份</th><th>自动化任务数</th><th>成功数</th><th>取消数</th><th>终止数</th><th>GOS任务数</th><th>渗透率</th><th>成功率</th></tr></thead>
+<tbody>
+<tr><td>2026-03</td><td>97</td><td>75</td><td>0</td><td>27</td><td>496</td><td>19.6%</td><td>73.5%</td></tr>
+<tr><td>2026-04</td><td>482</td><td>387</td><td>10</td><td>111</td><td>1,746</td><td>27.6%</td><td>77.7%</td></tr>
+<tr><td>2026-05</td><td>786</td><td>721</td><td>61</td><td>54</td><td>2,034</td><td>38.6%</td><td>93.0%</td></tr>
+<tr><td>2026-06</td><td>691</td><td>646</td><td>32</td><td>43</td><td>1,662</td><td>41.6%</td><td>93.8%</td></tr>
+<tr><td>2026-07</td><td>363</td><td>301</td><td>54</td><td>49</td><td>1,016</td><td>35.7%</td><td>86.0%</td></tr>
+</tbody>
+</table>
+<div class="note">
+统计口径：自动化任务数=按(类型+主单号)直接去重计数（不看状态）；成功/取消/终止数=各状态下分别按(类型+主单号)去重计数（可重叠）；<br>
+渗透率=AI中在GOS里存在的任务数/GOS任务数（LEFT JOIN）；成功率=成功数/(成功数+终止数)。<br>
+关于GOS口径：明细表"GOS任务数"=主单号×2（每单含订舱+录单两个动作，故恒为偶数）；图表3~7黄柱"GOS单量(主单号数)"=当周主单号数N（可为奇数），因订舱/录单渗透率分母同为这N个主单号。<br>
+注：GOS底表已更新至7月21日分区(ds=20260721)，7月数据统计至7月21日。
+</div>
+</div>
+
+<script>
+var weeks = ['6.10-6.16','6.17-6.23','6.24-6.30','7.1-7.7','7.8-7.14','7.15-7.21'];
+
+// ===== 图表1：月度混合图 =====
+var chart1 = echarts.init(document.getElementById('chart1'));
+chart1.setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+    legend: { data: ['自动化任务数','自动化成功数','GOS任务数','任务渗透率(%)','任务成功率(%)'], top: 0 },
+    grid: { left: 60, right: 60, bottom: 30, top: 50 },
+    xAxis: { type: 'category', data: ['3月','4月','5月','6月','7月'] },
+    yAxis: [
+        { type: 'value', name: '任务数', position: 'left' },
+        { type: 'value', name: '比率(%)', position: 'right', max: 100, axisLabel: { formatter: '{value}%' } }
+    ],
+    series: [
+        { name: '自动化任务数', type: 'bar', data: [97,482,786,691,363], itemStyle: { color: '#4472C4' } },
+        { name: '自动化成功数', type: 'bar', data: [75,387,721,646,301], itemStyle: { color: '#70AD47' } },
+        { name: 'GOS任务数', type: 'bar', data: [496,1746,2034,1662,1016], itemStyle: { color: '#FFC000' } },
+        { name: '任务渗透率(%)', type: 'line', yAxisIndex: 1, data: [19.56,27.61,38.64,41.58,35.73], symbol: 'circle', symbolSize: 8, lineStyle: { width: 3 }, itemStyle: { color: '#ED7D31' }, label: { show: true, formatter: '{c}%', position: 'top' } },
+        { name: '任务成功率(%)', type: 'line', yAxisIndex: 1, data: [73.53,77.71,93.03,93.76,86.00], symbol: 'diamond', symbolSize: 8, lineStyle: { width: 3, type: 'dashed' }, itemStyle: { color: '#A855F7' }, label: { show: true, formatter: '{c}%', position: 'top' } }
+    ]
+});
+
+// ===== 图表2：渗透率趋势（只看百分比，按航线分线） =====
+var chart2a = echarts.init(document.getElementById('chart2_booking'));
+chart2a.setOption({
+    title: { text: '订舱渗透率趋势', left: 'center', textStyle: { fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.filter(i=>i.value!=null).map(i=>i.seriesName+': '+i.value+'%').join('<br>'); } },
+    legend: { data: ['PVG-AMS','PVG-LGG','PVG-MAD','SZX-NLU','PVG-NLU'], bottom: 0 },
+    grid: { left: 50, right: 30, bottom: 50, top: 45 },
+    xAxis: { type: 'category', data: weeks },
+    yAxis: { type: 'value', name: '%', scale: true, min: 0, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: 'PVG-AMS', type: 'line', data: [100.0,100.0,95.7,75.8,80.0,93.8], symbol: 'circle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-LGG', type: 'line', data: [16.7,29.2,77.8,24.0,17.4,9.5], symbol: 'triangle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-MAD', type: 'line', data: [12.6,8.7,27.8,11.5,9.6,7.7], symbol: 'rect', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'SZX-NLU', type: 'line', data: [0,0,null,0,42.9,16.7], symbol: 'diamond', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'PVG-NLU', type: 'line', data: [0,0,0,0,66.7,100.0], symbol: 'pin', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } }
+    ]
+});
+
+var chart2b = echarts.init(document.getElementById('chart2_awb'));
+chart2b.setOption({
+    title: { text: '录单渗透率趋势', left: 'center', textStyle: { fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.filter(i=>i.value!=null).map(i=>i.seriesName+': '+i.value+'%').join('<br>'); } },
+    legend: { data: ['PVG-AMS','PVG-LGG','PVG-MAD','SZX-NLU','PVG-NLU'], bottom: 0 },
+    grid: { left: 50, right: 30, bottom: 50, top: 45 },
+    xAxis: { type: 'category', data: weeks },
+    yAxis: { type: 'value', name: '%', scale: true, min: 0, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: 'PVG-AMS', type: 'line', data: [92.6,95.7,95.7,75.8,90.0,93.8], symbol: 'circle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-LGG', type: 'line', data: [100.0,91.7,88.9,60.0,87.0,81.0], symbol: 'triangle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-MAD', type: 'line', data: [94.1,95.7,91.7,46.0,82.7,78.2], symbol: 'rect', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'SZX-NLU', type: 'line', data: [0,0,null,0,57.1,16.7], symbol: 'diamond', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'PVG-NLU', type: 'line', data: [0,0,0,0,16.7,100.0], symbol: 'pin', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } }
+    ]
+});
+
+// ===== 图表3：成功率趋势（成功数/(成功数+终止数)，按航线分线） =====
+var chart3a = echarts.init(document.getElementById('chart3_booking'));
+chart3a.setOption({
+    title: { text: '订舱成功率趋势', left: 'center', textStyle: { fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.filter(i=>i.value!=null).map(i=>i.seriesName+': '+i.value+'%').join('<br>'); } },
+    legend: { data: ['PVG-AMS','PVG-LGG','PVG-MAD','SZX-NLU','PVG-NLU'], bottom: 0 },
+    grid: { left: 50, right: 30, bottom: 50, top: 45 },
+    xAxis: { type: 'category', data: weeks },
+    yAxis: { type: 'value', name: '%', scale: true, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: 'PVG-AMS', type: 'line', connectNulls: true, data: [93.1,91.7,100.0,61.3,100.0,100.0], symbol: 'circle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-LGG', type: 'line', connectNulls: true, data: [100.0,85.7,100.0,100.0,100.0,100.0], symbol: 'triangle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-MAD', type: 'line', connectNulls: true, data: [92.9,100.0,90.0,100.0,100.0,100.0], symbol: 'rect', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'SZX-NLU', type: 'line', connectNulls: true, data: [null,null,null,null,100.0,100.0], symbol: 'diamond', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'PVG-NLU', type: 'line', connectNulls: true, data: [null,null,null,null,0.0,0.0], symbol: 'pin', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } }
+    ]
+});
+
+var chart3b = echarts.init(document.getElementById('chart3_awb'));
+chart3b.setOption({
+    title: { text: '录单成功率趋势', left: 'center', textStyle: { fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.filter(i=>i.value!=null).map(i=>i.seriesName+': '+i.value+'%').join('<br>'); } },
+    legend: { data: ['PVG-AMS','PVG-LGG','PVG-MAD','SZX-NLU','PVG-NLU'], bottom: 0 },
+    grid: { left: 50, right: 30, bottom: 50, top: 45 },
+    xAxis: { type: 'category', data: weeks },
+    yAxis: { type: 'value', name: '%', min: 0, max: 100, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: 'PVG-AMS', type: 'line', connectNulls: true, data: [84.6,100.0,94.4,75.0,94.4,93.3], symbol: 'circle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-LGG', type: 'line', connectNulls: true, data: [94.4,95.5,100.0,86.7,100.0,76.5], symbol: 'triangle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-MAD', type: 'line', connectNulls: true, data: [91.7,95.6,90.6,86.1,92.7,86.0], symbol: 'rect', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'SZX-NLU', type: 'line', connectNulls: true, data: [null,null,null,null,100.0,null], symbol: 'diamond', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'PVG-NLU', type: 'line', connectNulls: true, data: [null,null,null,null,null,100.0], symbol: 'pin', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } }
+    ]
+});
+
+// ===== 图表4-8：各航线任务数柱状图 =====
+function createBarChart(domId, title, bookingAi, awbAi, bookingDone, awbDone, gosData) {
+    var chart = echarts.init(document.getElementById(domId));
+    chart.setOption({
+        title: { text: title, left: 'center', textStyle: { fontSize: 14 } },
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['订舱自动化任务数','录单自动化任务数','订舱自动化成功数','录单自动化成功数','GOS单量(主单号数)'], bottom: 0 },
+        grid: { left: 50, right: 30, bottom: 55, top: 45 },
+        xAxis: { type: 'category', data: weeks },
+        yAxis: { type: 'value', name: '单量/任务数' },
+        series: [
+            { name: '订舱自动化任务数', type: 'bar', data: bookingAi, itemStyle: { color: '#4472C4' }, label: { show: true, position: 'top', fontSize: 9 } },
+            { name: '录单自动化任务数', type: 'bar', data: awbAi, itemStyle: { color: '#70AD47' }, label: { show: true, position: 'top', fontSize: 9 } },
+            { name: '订舱自动化成功数', type: 'bar', data: bookingDone, itemStyle: { color: '#2E5395' }, label: { show: true, position: 'top', fontSize: 9 } },
+            { name: '录单自动化成功数', type: 'bar', data: awbDone, itemStyle: { color: '#4E8A2F' }, label: { show: true, position: 'top', fontSize: 9 } },
+            { name: 'GOS单量(主单号数)', type: 'bar', data: gosData, itemStyle: { color: '#FFC000' }, label: { show: true, position: 'top', fontSize: 9 } }
+        ]
+    });
+    return chart;
+}
+
+var c3 = createBarChart('chart3', 'PVG-AMS 任务数', [27,23,22,25,16,15], [25,22,22,25,18,15], [27,22,22,19,16,15], [22,22,17,18,17,14], [27,23,23,33,20,16]);
+var c4 = createBarChart('chart4', 'PVG-LGG 任务数', [3,7,14,6,4,2], [18,22,16,15,20,17], [3,6,14,6,3,2], [17,21,16,13,20,13], [18,24,18,25,23,21]);
+var c5 = createBarChart('chart5', 'PVG-MAD 任务数', [15,8,10,10,5,6], [112,88,33,40,43,61], [13,8,9,7,5,5], [99,86,29,31,38,49], [119,92,36,87,52,78]);
+var c6 = createBarChart('chart6', 'SZX-NLU 任务数', [0,0,0,0,3,1], [0,0,0,0,4,1], [0,0,0,0,2,1], [0,0,0,0,4,0], [9,9,0,7,7,6]);
+var c7 = createBarChart('chart7', 'PVG-NLU 任务数', [0,0,0,0,4,3], [0,0,0,0,1,3], [0,0,0,0,0,0], [0,0,0,0,0,3], [15,14,22,16,6,3]);
+
+window.addEventListener('resize', function() { chart1.resize(); chart2a.resize(); chart2b.resize(); chart3a.resize(); chart3b.resize(); c3.resize(); c4.resize(); c5.resize(); c6.resize(); c7.resize(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI 订舱自动化指标汇总看板</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f8f9fa; color: #333; padding: 24px; font-size: 15px; }
+h1 { text-align: center; font-size: 24px; margin-bottom: 4px; color: #1a1a2e; }
+.subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 22px; }
+.kpi-row { display: flex; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+.kpi { flex: 1; min-width: 150px; background: #fff; border-radius: 10px; padding: 16px 18px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); text-align: center; }
+.kpi .value { font-size: 28px; font-weight: 700; color: #2563EB; }
+.kpi .value.green { color: #16a34a; }
+.kpi .value.orange { color: #ea580c; }
+.kpi .value.purple { color: #7c3aed; }
+.kpi .label { font-size: 12px; color: #888; margin-top: 4px; }
+.card { background: #fff; border-radius: 10px; box-shadow: 0 1px 8px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; }
+.card h2 { font-size: 16px; color: #2563EB; margin-bottom: 14px; border-left: 4px solid #2563EB; padding-left: 10px; }
+.chart { width: 100%; height: 400px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #2563EB; color: #fff; padding: 8px 10px; text-align: center; }
+td { padding: 7px 10px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+tr:hover td { background: #f8faff; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.tag-high { background: #dcfce7; color: #166534; }
+.tag-mid { background: #fef9c3; color: #854d0e; }
+.tag-low { background: #fee2e2; color: #991b1b; }
+.note { font-size: 12px; color: #999; margin-top: 12px; line-height: 1.7; }
+tr.total td { background: #f8fafc; font-weight: 700; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>AI 订舱自动化指标汇总看板</h1>
+<div class="subtitle">数据范围：2026-03-01 ~ 2026-10-20 | 归月口径：GOS ETD 月份</div>
+
+<!-- 1. 总览 KPI 卡 -->
+<div class="kpi-row">
+  <div class="kpi"><div class="value">4,883</div><div class="label">累计自动化任务数（3-10 月）</div></div>
+  <div class="kpi"><div class="value green">4,418</div><div class="label">累计自动化成功数（3-10 月）</div></div>
+  <div class="kpi"><div class="value orange">55.79%</div><div class="label">任务渗透率（10 月）</div></div>
+  <div class="kpi"><div class="value green">91.85%</div><div class="label">任务成功率（10 月）</div></div>
+  <div class="kpi"><div class="value purple">12.59%</div><div class="label">自动化提交率（10 月）</div></div>
+  <div class="kpi"><div class="value orange">≈ 370 h</div><div class="label">累计节省人时（≈ 46 工作日）</div></div>
+</div>
+
+<!-- 2. 月度趋势图 -->
+<div class="card">
+  <h2>月度趋势（3-10 月）</h2>
+  <div id="chartMonthly" class="chart"></div>
+</div>
+
+<!-- 2.5 按任务类型 + 指标定义（10.1-10.20 口径） -->
+<div class="two-col">
+  <div class="card">
+    <h2>按任务类型（10.1-10.20 口径）</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>类型</th><th>全量</th><th>自动化</th><th>成功</th><th>取消</th>
+          <th>任务渗透率</th><th>任务成功率</th><th>自动化提交率</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="text-align:left;font-weight:600">订舱</td>
+          <td>283</td><td>42</td><td>42</td><td>0</td>
+          <td><span class="tag tag-low">14.84%</span></td>
+          <td><span class="tag tag-high">100.0%</span></td>
+          <td><span class="tag tag-high">71.43%</span></td>
+        </tr>
+        <tr>
+          <td style="text-align:left;font-weight:600">主单录单</td>
+          <td>341</td><td>289</td><td>263</td><td>15</td>
+          <td><span class="tag tag-high">84.75%</span></td>
+          <td><span class="tag tag-high">91.0%</span></td>
+          <td><span class="tag tag-low">7.27%</span></td>
+        </tr>
+        <tr>
+          <td style="text-align:left;font-weight:600">分单录单</td>
+          <td>117</td><td>74</td><td>67</td><td>7</td>
+          <td><span class="tag tag-high">63.25%</span></td>
+          <td><span class="tag tag-high">90.54%</span></td>
+          <td><span class="tag tag-low">0.0%</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>指标定义</h2>
+    <table>
+      <thead><tr><th>指标</th><th>公式</th></tr></thead>
+      <tbody>
+        <tr><td style="text-align:left">任务渗透率</td><td style="text-align:left">自动化任务数 ÷ 全量任务数</td></tr>
+        <tr><td style="text-align:left">任务成功率</td><td style="text-align:left">自动化成功数 ÷ 自动化任务数</td></tr>
+        <tr><td style="text-align:left">自动化提交率</td><td style="text-align:left">自动提交任务数 ÷ 自动化任务数</td></tr>
+        <tr><td style="text-align:left">全量任务数</td><td style="text-align:left">GOS MAWB 去重 × 任务类型：订舱(1)+主单录单(1)+分单录单(CCSP HAWB 数)；SZX-LGG/MAD 无订舱</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 3. 按航线明细（合并版） -->
+<div class="card">
+  <h2>按航线明细（10.1-10.20 口径）</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>航线</th>
+        <th>全量任务数</th>
+        <th>自动化任务数</th>
+        <th>自动提交</th>
+        <th>成功数</th>
+        <th>失败数</th>
+        <th>已取消</th>
+        <th>任务渗透率</th>
+        <th>任务成功率</th>
+        <th>自动化提交率</th>
+        <th>节省人时</th>
+      </tr>
+    </thead>
+    <tbody id="routeTable"></tbody>
+  </table>
+</div>
+
+<!-- 4. 航线渗透率对比（按类型） -->
+<div class="card">
+  <h2>航线渗透率对比（10.1-10.20 口径）</h2>
+  <div id="chartRoutePen" class="chart"></div>
+</div>
+
+<!-- 5. 航线任务数明细（按任务类型，含分单录单） -->
+<div class="card">
+  <h2>航线任务数明细（按任务类型，含分单录单，10.1-10.20 口径）</h2>
+  <div id="chartRouteDetail" class="chart" style="height:440px;"></div>
+</div>
+
+<!-- 5.5 渗透率/成功率 周趋势（10.1-10.20 口径） -->
+<div class="two-col">
+  <div class="card">
+    <h2>渗透率趋势（按周，10.1-10.20 口径）</h2>
+    <div id="chartWeekPen" class="chart" style="height:320px"></div>
+  </div>
+  <div class="card">
+    <h2>成功率趋势（按周，10.1-10.20 口径）</h2>
+    <div id="chartWeekSuc" class="chart" style="height:320px"></div>
+  </div>
+</div>
+
+<!-- 6. 按月明细数据（原周明细→月） -->
+<div class="card">
+  <h2>按月明细数据（3-10 月）</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>月</th>
+        <th>全量任务数</th>
+        <th>自动化任务数</th>
+        <th>成功数</th>
+        <th>取消数</th>
+        <th>失败数</th>
+        <th>任务渗透率</th>
+        <th>任务成功率</th>
+        <th>节省人时</th>
+      </tr>
+    </thead>
+    <tbody id="monthlyTable"></tbody>
+  </table>
+</div>
+
+<div class="note" style="padding:14px;background:#fff;border-radius:8px;margin-top:20px;">
+  <b>统计口径（3-10 月合并）：</b><br>
+  数据范围：2026-03-01 ~ 2026-10-20，按 GOS ETD 月份归月。<br>
+  数据源：GOS 底表 cncdm.dwd_csn_exp_lh_gos_ord_df(MAX_PT) + 新 AI 平台底表 cnods.s_global_freight_ai_booking_task(deleted=0)。<br>
+  合并逻辑：0930（3-9 月月度）+ 1020（10.1-10.20 周度）时间连续无重叠，直接累加为总数。<br>
+  全量任务数 = GOS MAWB 去重 × 任务类型：订舱(1)+主单录单(1)+分单录单(CCSP HAWB 数)。<br>
+  任务渗透率 = 自动化任务数 ÷ 全量任务数；任务成功率 = 自动化成功数 ÷ 自动化任务数（含已取消，不剔除）。<br>
+  加权口径：累计渗透率 = Σ 自动化 ÷ Σ 全量 = 4883 / 11081 = 44.1%；累计成功率 = Σ 成功 ÷ Σ 自动化 = 4418 / 4883 = 90.5%。
+</div>
+
+<script>
+// ==================== 月度趋势图 ====================
+var months = ['3月','4月','5月','6月','7月','8月','9月','10月'];
+var gos = [496,1714,1989,1618,1401,1543,1594,726];
+var ai = [97,482,786,691,549,920,953,405];
+var done = [75,387,721,646,463,863,891,372];
+var pen = [19.56,28.12,39.52,42.71,39.19,59.62,59.79,55.79];
+var suc = [73.53,77.71,93.03,93.76,84.03,93.5,93.49,91.85];
+
+var chartMonthly = echarts.init(document.getElementById('chartMonthly'));
+chartMonthly.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['全量任务数','自动化任务数','自动化成功数','任务渗透率(%)','任务成功率(%)'], bottom: 0, textStyle: { fontSize: 11 } },
+    grid: { left: 60, right: 60, bottom: 55, top: 30 },
+    xAxis: { type: 'category', data: months },
+    yAxis: [
+        { type: 'value', name: '任务数', position: 'left' },
+        { type: 'value', name: '%', position: 'right', min: 0, max: 100, axisLabel: { formatter: '{value}%' } }
+    ],
+    series: [
+        { name: '全量任务数', type: 'bar', data: gos, itemStyle: { color: '#FFC000' }, label: { show: true, position: 'top', fontSize: 10 } },
+        { name: '自动化任务数', type: 'bar', data: ai, itemStyle: { color: '#2563EB' }, label: { show: true, position: 'top', fontSize: 10 } },
+        { name: '自动化成功数', type: 'bar', data: done, itemStyle: { color: '#16a34a' }, label: { show: true, position: 'top', fontSize: 10 } },
+        { name: '任务渗透率(%)', type: 'line', yAxisIndex: 1, data: pen, symbol: 'circle', symbolSize: 10, lineStyle: { width: 3 }, itemStyle: { color: '#ea580c' }, label: { show: true, formatter: '{c}%', fontSize: 11 } },
+        { name: '任务成功率(%)', type: 'line', yAxisIndex: 1, data: suc, symbol: 'diamond', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, itemStyle: { color: '#7c3aed' }, label: { show: true, formatter: '{c}%', fontSize: 11 } }
+    ]
+});
+
+// ==================== 航线明细表 ====================
+var routes = [
+    { name: 'PVG-MAD', total: 343, ai: 188, submit: 0, done: 179, fail: 1, cancel: 8, pen: 54.81, suc: 95.21, com: 0.0 },
+    { name: 'PVG-AMS', total: 114, ai: 72, submit: 36, done: 67, fail: 4, cancel: 1, pen: 63.16, suc: 93.06, com: 50.0 },
+    { name: 'PVG-LGG', total: 96, ai: 48, submit: 0, done: 45, fail: 1, cancel: 2, pen: 50.0, suc: 93.75, com: 0.0 },
+    { name: 'PVG-NLU', total: 76, ai: 45, submit: 0, done: 38, fail: 1, cancel: 6, pen: 59.21, suc: 84.44, com: 0.0 },
+    { name: 'SZX-LGG', total: 62, ai: 41, submit: 15, done: 34, fail: 4, cancel: 3, pen: 66.13, suc: 82.93, com: 36.59 },
+    { name: 'CAN-JFK', total: 30, ai: 0, submit: 0, done: 0, fail: 0, cancel: 0, pen: 0.0, suc: 0, com: 0 },
+    { name: 'SZX-NLU', total: 20, ai: 11, submit: 0, done: 9, fail: 0, cancel: 2, pen: 55.0, suc: 81.82, com: 0.0 }
+];
+
+function tagHtml(v, type) {
+    var cls = 'tag-low';
+    if (type === 'pen') cls = v >= 50 ? 'tag-high' : (v >= 20 ? 'tag-mid' : 'tag-low');
+    else if (type === 'suc') cls = v >= 90 ? 'tag-high' : (v >= 70 ? 'tag-mid' : 'tag-low');
+    else if (type === 'com') cls = v >= 50 ? 'tag-high' : (v >= 20 ? 'tag-mid' : 'tag-low');
+    return '<span class="tag ' + cls + '">' + v + '%</span>';
+}
+
+var tbody = document.getElementById('routeTable');
+var totalTotal = 0, totalAi = 0, totalSubmit = 0, totalDone = 0, totalFail = 0, totalCancel = 0;
+routes.forEach(function(r) {
+    totalTotal += r.total;
+    totalAi += r.ai;
+    totalSubmit += r.submit;
+    totalDone += r.done;
+    totalFail += r.fail;
+    totalCancel += r.cancel;
+    var hours = (r.done * 5 / 60).toFixed(1);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td style="text-align:left;font-weight:600">' + r.name + '</td>' +
+        '<td>' + r.total + '</td>' +
+        '<td>' + r.ai + '</td>' +
+        '<td>' + r.submit + '</td>' +
+        '<td>' + r.done + '</td>' +
+        '<td>' + r.fail + '</td>' +
+        '<td>' + r.cancel + '</td>' +
+        '<td>' + tagHtml(r.pen, 'pen') + '</td>' +
+        '<td>' + tagHtml(r.suc, 'suc') + '</td>' +
+        '<td>' + tagHtml(r.com, 'com') + '</td>' +
+        '<td>≈ ' + hours + ' h</td>';
+    tbody.appendChild(tr);
+});
+
+// 航线总计行
+var totalHours = (totalDone * 5 / 60).toFixed(1);
+var totalPen = (totalAi * 100 / totalTotal).toFixed(2);
+var totalSuc = totalAi > 0 ? (totalDone * 100 / totalAi).toFixed(2) : 0;
+var totalCom = totalAi > 0 ? (totalSubmit * 100 / totalAi).toFixed(2) : 0;
+var trTotal = document.createElement('tr');
+trTotal.className = 'total';
+trTotal.innerHTML = '<td style="text-align:left">合计</td>' +
+    '<td>' + totalTotal + '</td>' +
+    '<td>' + totalAi + '</td>' +
+    '<td>' + totalSubmit + '</td>' +
+    '<td>' + totalDone + '</td>' +
+    '<td>' + totalFail + '</td>' +
+    '<td>' + totalCancel + '</td>' +
+    '<td>' + tagHtml(parseFloat(totalPen), 'pen') + '</td>' +
+    '<td>' + tagHtml(parseFloat(totalSuc), 'suc') + '</td>' +
+    '<td>' + tagHtml(parseFloat(totalCom), 'com') + '</td>' +
+    '<td>≈ ' + totalHours + ' h</td>';
+tbody.appendChild(trTotal);
+
+// ==================== 航线渗透率对比 ====================
+var chartRoutePen = echarts.init(document.getElementById('chartRoutePen'));
+chartRoutePen.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['自动化任务数','自动提交任务数','自动化成功数','全量任务数'], top: 0 },
+    grid: { left: 60, right: 60, bottom: 30, top: 40 },
+    xAxis: { type: 'category', data: routes.map(function(r){ return r.name; }) },
+    yAxis: [
+        { type: 'value', name: '任务数', position: 'left' },
+        { type: 'value', name: '%', position: 'right', min: 0, max: 100, axisLabel: { formatter: '{value}%' } }
+    ],
+    series: [
+        { name: '全量任务数', type: 'bar', data: routes.map(function(r){ return r.total; }), itemStyle: { color: '#FFC000' }, label: { show: true, position: 'top', fontSize: 10 } },
+        { name: '自动化任务数', type: 'bar', data: routes.map(function(r){ return r.ai; }), itemStyle: { color: '#2563EB' }, label: { show: true, position: 'top', fontSize: 10 } },
+        { name: '自动提交任务数', type: 'bar', data: routes.map(function(r){ return r.submit; }), itemStyle: { color: '#7c3aed' }, label: { show: true, position: 'top', fontSize: 10 } },
+        { name: '自动化成功数', type: 'bar', data: routes.map(function(r){ return r.done; }), itemStyle: { color: '#16a34a' }, label: { show: true, position: 'top', fontSize: 10 } }
+    ]
+});
+
+// ==================== 航线任务数明细（按任务类型，含分单录单） ====================
+var routeTypeData = {
+    'PVG-MAD': { booking_ai: 0, booking_done: 0, mawb_ai: 121, mawb_done: 118, hawb_ai: 67, hawb_done: 61, hawb_base: 91, gos_mawb: 126 },
+    'PVG-AMS': { booking_ai: 30, booking_done: 30, mawb_ai: 40, mawb_done: 35, hawb_ai: 2, hawb_done: 2, hawb_base: 6, gos_mawb: 54 },
+    'PVG-LGG': { booking_ai: 0, booking_done: 0, mawb_ai: 48, mawb_done: 45, hawb_ai: 0, hawb_done: 0, hawb_base: 0, gos_mawb: 48 },
+    'PVG-NLU': { booking_ai: 8, booking_done: 8, mawb_ai: 32, mawb_done: 26, hawb_ai: 5, hawb_done: 4, hawb_base: 6, gos_mawb: 35 },
+    'SZX-LGG': { booking_ai: 0, booking_done: 0, mawb_ai: 41, mawb_done: 34, hawb_ai: 0, hawb_done: 0, hawb_base: 4, gos_mawb: 58 },
+    'CAN-JFK': { booking_ai: 0, booking_done: 0, mawb_ai: 0, mawb_done: 0, hawb_ai: 0, hawb_done: 0, hawb_base: 10, gos_mawb: 10 },
+    'SZX-NLU': { booking_ai: 4, booking_done: 4, mawb_ai: 7, mawb_done: 5, hawb_ai: 0, hawb_done: 0, hawb_base: 0, gos_mawb: 10 }
+};
+var rtNames = Object.keys(routeTypeData);
+var chartRouteDetail = echarts.init(document.getElementById('chartRouteDetail'));
+chartRouteDetail.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['订舱任务','订舱成功','主单录单任务','主单录单成功','分单录单任务','分单录单成功','分单数','GOS主单数'], bottom: 0, textStyle: { fontSize: 11 } },
+    grid: { left: 50, right: 30, bottom: 80, top: 30 },
+    xAxis: { type: 'category', data: rtNames, axisLabel: { fontSize: 11 } },
+    yAxis: { type: 'value', name: '单量/任务数' },
+    series: [
+        { name: '订舱任务', type: 'bar', data: rtNames.map(function(r){ return routeTypeData[r].booking_ai; }), itemStyle: { color: '#4472C4' }, label: { show: true, position: 'top', fontSize: 9 } },
+        { name: '订舱成功', type: 'bar', data: rtNames.map(function(r){ return routeTypeData[r].booking_done; }), itemStyle: { color: '#2E5395' }, label: { show: true, position: 'top', fontSize: 9 } },
+        { name: '主单录单任务', type: 'bar', data: rtNames.map(function(r){ return routeTypeData[r].mawb_ai; }), itemStyle: { color: '#70AD47' }, label: { show: true, position: 'top', fontSize: 9 } },
+        { name: '主单录单成功', type: 'bar', data: rtNames.map(function(r){ return routeTypeData[r].mawb_done; }), itemStyle: { color: '#4E8A2F' }, label: { show: true, position: 'top', fontSize: 9 } },
+        { name: '分单录单任务', type: 'bar', data: rtNames.map(function(r){ return routeTypeData[r].hawb_ai; }), itemStyle: { color: '#ED7D31' }, label: { show: true, position: 'top', fontSize: 9 } },
+        { name: '分单录单成功', type: 'bar', data: rtNames.map(function(r){ return routeTypeData[r].hawb_done; }), itemStyle: { color: '#C55A11' }, label: { show: true, position: 'top', fontSize: 9 } },
+        { name: '分单数', type: 'bar', data: rtNames.map(function(r){ return routeTypeData[r].hawb_base; }), itemStyle: { color: '#A9D18E' }, label: { show: true, position: 'top', fontSize: 9 } },
+        { name: 'GOS主单数', type: 'bar', data: rtNames.map(function(r){ return routeTypeData[r].gos_mawb; }), itemStyle: { color: '#FFC000' }, label: { show: true, position: 'top', fontSize: 9 } }
+    ]
+});
+
+// ==================== 按月明细数据 ====================
+// 失败数口径：3-9 月 = 终止数 + 主流程终止（来自 0930 看板）；10 月起 = AI 平台直接失败数（来自新看板）
+var monthly = [
+    { m: '3 月', total: 496, ai: 97, done: 75, cancel: 0, fail: 27, pen: 19.56, suc: 73.53 },
+    { m: '4 月', total: 1714, ai: 482, done: 387, cancel: 10, fail: 111, pen: 28.12, suc: 77.71 },
+    { m: '5 月', total: 1989, ai: 786, done: 721, cancel: 61, fail: 54, pen: 39.52, suc: 93.03 },
+    { m: '6 月', total: 1618, ai: 691, done: 646, cancel: 32, fail: 43, pen: 42.71, suc: 93.76 },
+    { m: '7 月', total: 1401, ai: 549, done: 463, cancel: 80, fail: 88, pen: 39.19, suc: 84.03 },
+    { m: '8 月', total: 1543, ai: 920, done: 863, cancel: 96, fail: 60, pen: 59.62, suc: 93.5 },
+    { m: '9 月', total: 1594, ai: 953, done: 891, cancel: 73, fail: 17, pen: 59.79, suc: 93.49 },
+    { m: '10 月 1-20 日', total: 726, ai: 405, done: 372, cancel: 22, fail: 11, pen: 55.79, suc: 91.85 }
+];
+
+var mtbody = document.getElementById('monthlyTable');
+var mTotal = 0, mAi = 0, mDone = 0, mCancel = 0, mFail = 0;
+monthly.forEach(function(r) {
+    mTotal += r.total;
+    mAi += r.ai;
+    mDone += r.done;
+    if (typeof r.cancel === 'number') mCancel += r.cancel;
+    if (typeof r.fail === 'number') mFail += r.fail;
+    var hours = (r.done * 5 / 60).toFixed(1);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + r.m + '</td>' +
+        '<td>' + r.total + '</td>' +
+        '<td>' + r.ai + '</td>' +
+        '<td>' + r.done + '</td>' +
+        '<td>' + r.cancel + '</td>' +
+        '<td>' + r.fail + '</td>' +
+        '<td>' + tagHtml(r.pen, 'pen') + '</td>' +
+        '<td>' + tagHtml(r.suc, 'suc') + '</td>' +
+        '<td>≈ ' + hours + ' h</td>';
+    mtbody.appendChild(tr);
+});
+
+// 月度合计行
+var mTotalHours = (mDone * 5 / 60).toFixed(1);
+var mTotalPen = (mAi * 100 / mTotal).toFixed(2);
+var mTotalSuc = (mDone * 100 / mAi).toFixed(2);
+var trMTotal = document.createElement('tr');
+trMTotal.className = 'total';
+trMTotal.innerHTML = '<td>合计</td>' +
+    '<td>' + mTotal + '</td>' +
+    '<td>' + mAi + '</td>' +
+    '<td>' + mDone + '</td>' +
+    '<td>' + mCancel + '</td>' +
+    '<td>' + mFail + '</td>' +
+    '<td>' + tagHtml(parseFloat(mTotalPen), 'pen') + '</td>' +
+    '<td>' + tagHtml(parseFloat(mTotalSuc), 'suc') + '</td>' +
+    '<td>≈ ' + mTotalHours + ' h</td>';
+mtbody.appendChild(trMTotal);
+
+// ==================== 渗透率/成功率 周趋势（10.1-10.20 口径） ====================
+var weekLabels = ['9.28-10.4','10.5-10.11','10.12-10.18','10.19-10.25'];
+var weekPen = [35.93, 60.59, 63.18, 60.78];
+var weekSuc = [78.33, 97.55, 94.70, 74.19];
+var weekCom = [0.0, 12.27, 17.22, 16.13];
+
+var chartWeekPen = echarts.init(document.getElementById('chartWeekPen'));
+chartWeekPen.setOption({
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.map(function(i){ return i.marker + i.seriesName + ': ' + (i.value!=null ? i.value+'%' : '暂无'); }).join('<br>'); } },
+    grid: { left: 50, right: 30, bottom: 30, top: 40 },
+    xAxis: { type: 'category', data: weekLabels, axisLabel: { fontSize: 11 } },
+    yAxis: { type: 'value', name: '%', min: 0, max: 100, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: '任务渗透率', type: 'line', data: weekPen, symbol: 'circle', symbolSize: 10, lineStyle: { width: 3 }, itemStyle: { color: '#2563EB' }, label: { show: true, formatter: '{c}%', fontSize: 12 } },
+        { name: '自动化提交率', type: 'line', data: weekCom, symbol: 'diamond', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, itemStyle: { color: '#7c3aed' }, label: { show: true, formatter: '{c}%', fontSize: 11 } }
+    ]
+});
+
+var chartWeekSuc = echarts.init(document.getElementById('chartWeekSuc'));
+chartWeekSuc.setOption({
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.map(function(i){ return i.marker + i.seriesName + ': ' + (i.value!=null ? i.value+'%' : '暂无'); }).join('<br>'); } },
+    grid: { left: 50, right: 30, bottom: 30, top: 40 },
+    xAxis: { type: 'category', data: weekLabels, axisLabel: { fontSize: 11 } },
+    yAxis: { type: 'value', name: '%', min: 0, max: 100, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: '任务成功率', type: 'line', data: weekSuc, symbol: 'circle', symbolSize: 10, lineStyle: { width: 3 }, itemStyle: { color: '#16a34a' }, label: { show: true, formatter: '{c}%', fontSize: 12 } }
+    ]
+});
+
+window.addEventListener('resize', function() {
+    chartMonthly.resize();
+    chartRoutePen.resize();
+    chartRouteDetail.resize();
+    chartWeekPen.resize();
+    chartWeekSuc.resize();
+});
+</script>
+</body>
+</html>

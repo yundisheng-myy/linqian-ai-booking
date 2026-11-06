@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI订舱自动化指标看板</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; padding: 24px; }
+h1 { text-align: center; font-size: 22px; margin-bottom: 8px; color: #1a1a2e; }
+.subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 24px; }
+.card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 24px; margin-bottom: 24px; }
+.card h2 { font-size: 16px; color: #4472C4; margin-bottom: 16px; border-left: 4px solid #4472C4; padding-left: 12px; }
+.chart { width: 100%; height: 400px; }
+.kpi-row { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.kpi { flex: 1; min-width: 140px; background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
+.kpi .value { font-size: 28px; font-weight: 700; color: #4472C4; }
+.kpi .label { font-size: 12px; color: #888; margin-top: 4px; }
+.kpi .trend { font-size: 12px; margin-top: 4px; }
+.trend.up { color: #52c41a; }
+.trend.down { color: #ff4d4f; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #4472C4; color: #fff; padding: 8px 12px; text-align: center; }
+td { padding: 8px 12px; text-align: center; border-bottom: 1px solid #eee; }
+tr:hover td { background: #f0f5ff; }
+.note { font-size: 12px; color: #999; margin-top: 12px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<h1>AI订舱自动化指标看板</h1>
+<div class="subtitle">数据来源：AI航空订舱&录单 + AI航空订舱New | GOS底表：cncdm.dwd_csn_exp_lh_gos_ord_df(ds=20260714) | 数据截止 2026-07-14</div>
+
+<div class="kpi-row">
+<div class="kpi"><div class="value">2,286</div><div class="label">累计自动化任务数</div></div>
+<div class="kpi"><div class="value">2,020</div><div class="label">累计自动化成功数</div></div>
+<div class="kpi"><div class="value">41.6%</div><div class="label">6月任务渗透率</div><div class="trend up">&#x2191; +3.0pp vs 5月</div></div>
+<div class="kpi"><div class="value">93.8%</div><div class="label">6月任务成功率</div><div class="trend up">&#x2191; +0.7pp vs 5月</div></div>
+</div>
+
+<!-- 图表1：月度混合图 -->
+<div class="card">
+<h2>图表1：月度自动化指标趋势（3-7月）</h2>
+<div id="chart1" class="chart"></div>
+</div>
+
+<!-- 图表2：航线×周 渗透率趋势（只看百分比） -->
+<div class="card">
+<h2>图表2：航线×周 订舱/录单渗透率趋势（近5周）</h2>
+<div id="chart2_booking" class="chart" style="height:340px;"></div>
+<div id="chart2_awb" class="chart" style="height:340px; margin-top:12px;"></div>
+</div>
+
+<!-- 图表3：PVG-AMS 任务数明细 -->
+<div class="card">
+<h2>图表3：PVG-AMS 任务数明细（近5周）</h2>
+<div id="chart3" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表4：PVG-LGG 任务数明细 -->
+<div class="card">
+<h2>图表4：PVG-LGG 任务数明细（近5周）</h2>
+<div id="chart4" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表5：PVG-MAD 任务数明细 -->
+<div class="card">
+<h2>图表5：PVG-MAD 任务数明细（近5周）</h2>
+<div id="chart5" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表6：SZX-NLU 任务数明细 -->
+<div class="card">
+<h2>图表6：SZX-NLU 任务数明细（近5周）</h2>
+<div id="chart6" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表7：PVG-NLU 任务数明细 -->
+<div class="card">
+<h2>图表7：PVG-NLU 任务数明细（近5周）</h2>
+<div id="chart7" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 明细数据表 -->
+<div class="card">
+<h2>明细数据表</h2>
+<table>
+<thead><tr><th>月份</th><th>自动化任务数</th><th>成功数</th><th>取消数</th><th>终止数</th><th>GOS任务数</th><th>渗透率</th><th>成功率</th></tr></thead>
+<tbody>
+<tr><td>2026-03</td><td>97</td><td>75</td><td>0</td><td>27</td><td>496</td><td>19.6%</td><td>73.5%</td></tr>
+<tr><td>2026-04</td><td>482</td><td>387</td><td>10</td><td>111</td><td>1,746</td><td>27.6%</td><td>77.7%</td></tr>
+<tr><td>2026-05</td><td>786</td><td>721</td><td>61</td><td>54</td><td>2,034</td><td>38.6%</td><td>93.0%</td></tr>
+<tr><td>2026-06</td><td>691</td><td>646</td><td>32</td><td>43</td><td>1,662</td><td>41.6%</td><td>93.8%</td></tr>
+<tr><td>2026-07</td><td>230</td><td>191</td><td>37</td><td>33</td><td>674</td><td>34.1%</td><td>85.3%</td></tr>
+</tbody>
+</table>
+<div class="note">
+统计口径：自动化任务数=按(类型+主单号)直接去重计数（不看状态）；成功/取消/终止数=各状态下分别按(类型+主单号)去重计数（可重叠）；<br>
+渗透率=AI中在GOS里存在的任务数/GOS任务数（LEFT JOIN）；成功率=成功数/(成功数+终止数)。<br>
+关于GOS口径：明细表"GOS任务数"=主单号×2（每单含订舱+录单两个动作，故恒为偶数）；图表3~7黄柱"GOS单量(主单号数)"=当周主单号数N（可为奇数），因订舱/录单渗透率分母同为这N个主单号。<br>
+注：GOS底表已更新至7月14日分区(ds=20260714)，7月数据统计至7月14日。
+</div>
+</div>
+
+<script>
+var weeks = ['6.10-6.16','6.17-6.23','6.24-6.30','7.1-7.7','7.8-7.14'];
+
+// ===== 图表1：月度混合图 =====
+var chart1 = echarts.init(document.getElementById('chart1'));
+chart1.setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+    legend: { data: ['自动化任务数','自动化成功数','GOS任务数','任务渗透率(%)','任务成功率(%)'], top: 0 },
+    grid: { left: 60, right: 60, bottom: 30, top: 50 },
+    xAxis: { type: 'category', data: ['3月','4月','5月','6月','7月'] },
+    yAxis: [
+        { type: 'value', name: '任务数', position: 'left' },
+        { type: 'value', name: '比率(%)', position: 'right', max: 100, axisLabel: { formatter: '{value}%' } }
+    ],
+    series: [
+        { name: '自动化任务数', type: 'bar', data: [97,482,786,691,230], itemStyle: { color: '#4472C4' } },
+        { name: '自动化成功数', type: 'bar', data: [75,387,721,646,191], itemStyle: { color: '#70AD47' } },
+        { name: 'GOS任务数', type: 'bar', data: [496,1746,2034,1662,674], itemStyle: { color: '#FFC000' } },
+        { name: '任务渗透率(%)', type: 'line', yAxisIndex: 1, data: [19.56,27.61,38.64,41.58,34.12], symbol: 'circle', symbolSize: 8, lineStyle: { width: 3 }, itemStyle: { color: '#ED7D31' }, label: { show: true, formatter: '{c}%', position: 'top' } },
+        { name: '任务成功率(%)', type: 'line', yAxisIndex: 1, data: [73.53,77.71,93.03,93.76,85.27], symbol: 'diamond', symbolSize: 8, lineStyle: { width: 3, type: 'dashed' }, itemStyle: { color: '#A855F7' }, label: { show: true, formatter: '{c}%', position: 'top' } }
+    ]
+});
+
+// ===== 图表2：渗透率趋势（只看百分比，按航线分线） =====
+var chart2a = echarts.init(document.getElementById('chart2_booking'));
+chart2a.setOption({
+    title: { text: '订舱渗透率趋势', left: 'center', textStyle: { fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.filter(i=>i.value!=null).map(i=>i.seriesName+': '+i.value+'%').join('<br>'); } },
+    legend: { data: ['PVG-AMS','PVG-LGG','PVG-MAD','SZX-NLU','PVG-NLU'], bottom: 0 },
+    grid: { left: 50, right: 30, bottom: 50, top: 45 },
+    xAxis: { type: 'category', data: weeks },
+    yAxis: { type: 'value', name: '%', max: 100, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: 'PVG-AMS', type: 'line', data: [100.0,100.0,95.7,75.8,84.2], symbol: 'circle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-LGG', type: 'line', data: [16.7,29.2,77.8,24.0,18.8], symbol: 'triangle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-MAD', type: 'line', data: [12.6,8.7,27.8,11.5,9.6], symbol: 'rect', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'SZX-NLU', type: 'line', data: [0,0,null,0,42.9], symbol: 'diamond', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: false } },
+        { name: 'PVG-NLU', type: 'line', data: [0,0,0,0,66.7], symbol: 'pin', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: false } }
+    ]
+});
+
+var chart2b = echarts.init(document.getElementById('chart2_awb'));
+chart2b.setOption({
+    title: { text: '录单渗透率趋势', left: 'center', textStyle: { fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.filter(i=>i.value!=null).map(i=>i.seriesName+': '+i.value+'%').join('<br>'); } },
+    legend: { data: ['PVG-AMS','PVG-LGG','PVG-MAD','SZX-NLU','PVG-NLU'], bottom: 0 },
+    grid: { left: 50, right: 30, bottom: 50, top: 45 },
+    xAxis: { type: 'category', data: weeks },
+    yAxis: { type: 'value', name: '%', max: 100, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: 'PVG-AMS', type: 'line', data: [92.6,95.7,95.7,75.8,89.5], symbol: 'circle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-LGG', type: 'line', data: [100.0,91.7,88.9,60.0,81.2], symbol: 'triangle', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-MAD', type: 'line', data: [94.1,95.7,91.7,46.0,82.7], symbol: 'rect', symbolSize: 8, lineStyle: { width: 3 }, label: { show: true, formatter: '{c}%' } },
+        { name: 'SZX-NLU', type: 'line', data: [0,0,null,0,57.1], symbol: 'diamond', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: false } },
+        { name: 'PVG-NLU', type: 'line', data: [0,0,0,0,16.7], symbol: 'pin', symbolSize: 8, lineStyle: { width: 2, type: 'dashed' }, label: { show: false } }
+    ]
+});
+
+// ===== 图表3-5：各航线任务数柱状图 =====
+function createBarChart(domId, title, bookingAi, awbAi, gosData) {
+    var chart = echarts.init(document.getElementById(domId));
+    chart.setOption({
+        title: { text: title, left: 'center', textStyle: { fontSize: 14 } },
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['订舱自动化任务数','录单自动化任务数','GOS单量(主单号数)'], bottom: 0 },
+        grid: { left: 50, right: 30, bottom: 40, top: 45 },
+        xAxis: { type: 'category', data: weeks },
+        yAxis: { type: 'value', name: '单量/任务数' },
+        series: [
+            { name: '订舱自动化任务数', type: 'bar', data: bookingAi, itemStyle: { color: '#4472C4' }, label: { show: true, position: 'top', fontSize: 10 } },
+            { name: '录单自动化任务数', type: 'bar', data: awbAi, itemStyle: { color: '#70AD47' }, label: { show: true, position: 'top', fontSize: 10 } },
+            { name: 'GOS单量(主单号数)', type: 'bar', data: gosData, itemStyle: { color: '#FFC000' }, label: { show: true, position: 'top', fontSize: 10 } }
+        ]
+    });
+    return chart;
+}
+
+var c3 = createBarChart('chart3', 'PVG-AMS 任务数', [27,23,22,25,16], [25,22,22,25,17], [27,23,23,33,19]);
+var c4 = createBarChart('chart4', 'PVG-LGG 任务数', [3,7,14,6,3], [18,22,16,15,13], [18,24,18,25,16]);
+var c5 = createBarChart('chart5', 'PVG-MAD 任务数', [15,8,10,10,5], [112,88,33,40,43], [119,92,36,87,52]);
+var c6 = createBarChart('chart6', 'SZX-NLU 任务数', [0,0,0,0,3], [0,0,0,0,4], [9,9,0,7,7]);
+var c7 = createBarChart('chart7', 'PVG-NLU 任务数', [0,0,0,0,4], [0,0,0,0,1], [15,14,22,16,6]);
+
+window.addEventListener('resize', function() { chart1.resize(); chart2a.resize(); chart2b.resize(); c3.resize(); c4.resize(); c5.resize(); c6.resize(); c7.resize(); });
+</script>
+</body>
+</html>

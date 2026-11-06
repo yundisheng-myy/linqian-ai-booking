@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI订舱自动化指标看板</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; padding: 24px; }
+h1 { text-align: center; font-size: 22px; margin-bottom: 8px; color: #1a1a2e; }
+.subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 24px; }
+.card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 24px; margin-bottom: 24px; }
+.card h2 { font-size: 16px; color: #4472C4; margin-bottom: 16px; border-left: 4px solid #4472C4; padding-left: 12px; }
+.chart { width: 100%; height: 400px; }
+.kpi-row { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.kpi { flex: 1; min-width: 140px; background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
+.kpi .value { font-size: 28px; font-weight: 700; color: #4472C4; }
+.kpi .label { font-size: 12px; color: #888; margin-top: 4px; }
+.kpi .trend { font-size: 12px; margin-top: 4px; }
+.trend.up { color: #52c41a; }
+.trend.down { color: #ff4d4f; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #4472C4; color: #fff; padding: 8px 12px; text-align: center; }
+td { padding: 8px 12px; text-align: center; border-bottom: 1px solid #eee; }
+tr:hover td { background: #f0f5ff; }
+.note { font-size: 12px; color: #999; margin-top: 12px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<h1>AI订舱自动化指标看板</h1>
+<div class="subtitle">数据来源：AI航空订舱&录单 + AI航空订舱New | GOS底表：cncdm.dwd_csn_exp_lh_gos_ord_df(ds=20260908) | 数据截止 2026-09-08</div>
+
+<div class="kpi-row">
+<div class="kpi"><div class="value">3,782</div><div class="label">累计自动化任务数</div></div>
+<div class="kpi"><div class="value">3,400</div><div class="label">累计自动化成功数</div></div>
+<div class="kpi"><div class="value">68.17%</div><div class="label">9月任务渗透率</div><div class="trend up">&#x2191; 8.6pp vs 8月</div></div>
+<div class="kpi"><div class="value">96.46%</div><div class="label">9月任务成功率</div><div class="trend up">&#x2191; 3.0pp vs 8月</div></div>
+</div>
+
+<!-- 图表1：月度混合图 -->
+<div class="card">
+<h2>图表1：月度自动化指标趋势（3-9月）</h2>
+<div id="chart1" class="chart"></div>
+</div>
+
+<!-- 月度三率折线图 -->
+<div class="card">
+<h2>月度核心指标趋势（3-9月）</h2>
+<div id="chart_monthly_rates" class="chart" style="height:380px;"></div>
+</div>
+
+<!-- 图表2：航线×周 渗透率趋势 -->
+<div class="card">
+<h2>图表2：航线×周 订舱/录单渗透率趋势（近4周）</h2>
+<div id="chart2_booking" class="chart" style="height:340px;"></div>
+<div id="chart2_awb" class="chart" style="height:340px; margin-top:12px;"></div>
+</div>
+
+<!-- 图表3：航线×周 成功率趋势 -->
+<div class="card">
+<h2>图表3：航线×周 订舱/录单成功率趋势（近4周）</h2>
+<div id="chart3_booking" class="chart" style="height:340px;"></div>
+<div id="chart3_awb" class="chart" style="height:340px; margin-top:12px;"></div>
+</div>
+
+
+<!-- 图表4：PVG-AMS 任务数明细 -->
+<div class="card">
+<h2>图表4：PVG-AMS 任务数明细（近5周）</h2>
+<div id="chart_bar_0" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表5：PVG-LGG 任务数明细 -->
+<div class="card">
+<h2>图表5：PVG-LGG 任务数明细（近5周）</h2>
+<div id="chart_bar_1" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表6：PVG-MAD 任务数明细 -->
+<div class="card">
+<h2>图表6：PVG-MAD 任务数明细（近5周）</h2>
+<div id="chart_bar_2" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表7：PVG-NLU 任务数明细 -->
+<div class="card">
+<h2>图表7：PVG-NLU 任务数明细（近5周）</h2>
+<div id="chart_bar_3" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表8：SZX-NLU 任务数明细 -->
+<div class="card">
+<h2>图表8：SZX-NLU 任务数明细（近5周）</h2>
+<div id="chart_bar_4" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表9：SZX-LGG 任务数明细 -->
+<div class="card">
+<h2>图表9：SZX-LGG 任务数明细（近5周）</h2>
+<div id="chart_bar_5" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表10：CAN-LHR 任务数明细 -->
+<div class="card">
+<h2>图表10：CAN-LHR 任务数明细（近5周）</h2>
+<div id="chart_bar_6" class="chart" style="height:340px;"></div>
+</div>
+
+<!-- 图表11：CAN-JFK 任务数明细 -->
+<div class="card">
+<h2>图表11：CAN-JFK 任务数明细（近5周）</h2>
+<div id="chart_bar_7" class="chart" style="height:340px;"></div>
+</div>
+
+
+<!-- 明细数据表 -->
+<div class="card">
+<h2>明细数据表</h2>
+<table>
+<thead><tr><th>月份</th><th>自动化任务数</th><th>成功数</th><th>取消数</th><th>子流程终止数</th><th>主流程终止数</th><th>GOS任务数</th><th>渗透率</th><th>成功率</th></tr></thead>
+<tbody>
+<tr><td>03月</td><td>97</td><td>75</td><td>0</td><td>27</td><td>0</td><td>496</td><td>19.56%</td><td>73.53%</td></tr>
+<tr><td>04月</td><td>482</td><td>387</td><td>10</td><td>111</td><td>0</td><td>1,714</td><td>28.12%</td><td>77.71%</td></tr>
+<tr><td>05月</td><td>786</td><td>721</td><td>61</td><td>54</td><td>0</td><td>1,989</td><td>39.52%</td><td>93.03%</td></tr>
+<tr><td>06月</td><td>691</td><td>646</td><td>32</td><td>43</td><td>0</td><td>1,618</td><td>42.71%</td><td>93.76%</td></tr>
+<tr><td>07月</td><td>549</td><td>463</td><td>80</td><td>62</td><td>26</td><td>1,401</td><td>39.19%</td><td>84.03%</td></tr>
+<tr><td>08月</td><td>920</td><td>863</td><td>98</td><td>30</td><td>30</td><td>1,543</td><td>59.62%</td><td>93.5%</td></tr>
+<tr><td>2026-09(截至9.8)</td><td>257</td><td>245</td><td>25</td><td>7</td><td>2</td><td>377</td><td>68.17%</td><td>96.46%</td></tr>
+</tbody>
+</table>
+<div class="note">
+统计口径：自动化任务数=按(类型+主单号)直接去重计数（不看状态）；成功/取消/终止数=各状态下分别按(类型+主单号)去重计数（可重叠）；<br>
+渗透率=AI中在GOS里存在的任务数/GOS任务数（LEFT JOIN）；月度成功率=子流程成功数/(子流程成功数+子流程终止数+914主流程已终止数)；航线×周成功率=子流程成功数/(子流程成功数+子流程终止数+当周914主流程已终止数)。<br>
+关于GOS口径：明细表"GOS任务数"=主单号×2（每单含订舱+录单两个动作，故恒为偶数），但 SZX-LGG/SZX-MAD 为×1（仅生成“录单”类型，因为这两条航线只有录单任务）；图表4~11黄柱"GOS单量(主单号数)"=当周主单号数N（可为奇数），因订舱/录单渗透率分母同为这N个主单号。<br>
+注：GOS底表使用9月8日分区(ds=20260908)，但为保证与AI任务口径一致，仅保留ETD≤9月8日的记录；AI任务明细统计至9月8日。9月数据为不完整月份，仅供参考不代表全月水平。
+</div>
+</div>
+
+<script>
+var weeks = ["8.17-8.23", "8.24-8.30", "8.31-9.6", "9.7-9.13"];
+
+// ===== 图表1：月度混合图 =====
+var chart1 = echarts.init(document.getElementById('chart1'));
+chart1.setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+    legend: { data: ['自动化任务数','自动化成功数','GOS任务数','任务渗透率(%)','任务成功率(%)'], top: 0 },
+    grid: { left: 60, right: 60, bottom: 30, top: 50 },
+    xAxis: { type: 'category', data: ["3\u6708", "4\u6708", "5\u6708", "6\u6708", "7\u6708", "8\u6708", "9\u6708"] },
+    yAxis: [
+        { type: 'value', name: '任务数', position: 'left' },
+        { type: 'value', name: '比率(%)', position: 'right', max: 100, axisLabel: { formatter: '{value}%' } }
+    ],
+    series: [
+        { name: '自动化任务数', type: 'bar', data: [97, 482, 786, 691, 549, 920, 257], itemStyle: { color: '#4472C4' } },
+        { name: '自动化成功数', type: 'bar', data: [75, 387, 721, 646, 463, 863, 245], itemStyle: { color: '#70AD47' } },
+        { name: 'GOS任务数', type: 'bar', data: [496, 1714, 1989, 1618, 1401, 1543, 377], itemStyle: { color: '#FFC000' } },
+        { name: '任务渗透率(%)', type: 'line', yAxisIndex: 1, data: [19.56, 28.12, 39.52, 42.71, 39.19, 59.62, 68.17], symbol: 'circle', symbolSize: 8, lineStyle: { width: 3 }, itemStyle: { color: '#ED7D31' }, label: { show: true, formatter: '{c}%', position: 'top' } },
+        { name: '任务成功率(%)', type: 'line', yAxisIndex: 1, data: [73.53, 77.71, 93.03, 93.76, 84.03, 93.5, 96.46], symbol: 'diamond', symbolSize: 8, lineStyle: { width: 3, type: 'dashed' }, itemStyle: { color: '#A855F7' }, label: { show: true, formatter: '{c}%', position: 'top' } }
+    ]
+});
+
+// ===== 月度三率折线图 =====
+var chartMonthlyRates = echarts.init(document.getElementById('chart_monthly_rates'));
+chartMonthlyRates.setOption({
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.map(function(i){ return i.marker + i.seriesName + ': ' + (i.value != null ? i.value + '%' : '暂无数据'); }).join('<br>'); } },
+    legend: { data: ['任务渗透率','任务成功率','算法准确率'], top: 0 },
+    grid: { left: 60, right: 60, bottom: 30, top: 50 },
+    xAxis: { type: 'category', data: ["3\u6708", "4\u6708", "5\u6708", "6\u6708", "7\u6708", "8\u6708", "9\u6708"] },
+    yAxis: { type: 'value', name: '%', min: 0, max: 100, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: '任务渗透率', type: 'line', data: [19.56, 28.12, 39.52, 42.71, 39.19, 59.62, 68.17], symbol: 'circle', symbolSize: 10, lineStyle: { width: 3 }, itemStyle: { color: '#4472C4' }, label: { show: true, formatter: '{c}%', fontSize: 12 } },
+        { name: '任务成功率', type: 'line', data: [73.53, 77.71, 93.03, 93.76, 84.03, 93.5, 96.46], symbol: 'diamond', symbolSize: 10, lineStyle: { width: 3 }, itemStyle: { color: '#ED7D31' }, label: { show: true, formatter: '{c}%', fontSize: 12 } },
+        { name: '算法准确率', type: 'line', data: [95,96,98,98,98,98], symbol: 'triangle', symbolSize: 10, lineStyle: { width: 3, type: 'dashed' }, itemStyle: { color: '#A855F7' }, label: { show: true, formatter: '{c}%', fontSize: 12 } }
+    ]
+});
+
+// ===== 图表2：渗透率趋势 =====
+var chart2a = echarts.init(document.getElementById('chart2_booking'));
+chart2a.setOption({
+    title: { text: '订舱渗透率趋势', left: 'center', textStyle: { fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.filter(i=>i.value!=null).map(i=>i.seriesName+': '+i.value+'%').join('<br>'); } },
+    legend: { data: ["PVG-AMS", "PVG-LGG", "PVG-MAD", "PVG-NLU", "SZX-NLU", "SZX-LGG", "SZX-MAD", "CAN-LHR", "CAN-JFK"], bottom: 0 },
+    grid: { left: 50, right: 30, bottom: 50, top: 45 },
+    xAxis: { type: 'category', data: weeks },
+    yAxis: { type: 'value', name: '%', scale: true, min: 0, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: 'PVG-AMS', type: 'line', lineStyle: { width: 3 }, data: [82.4, 28.6, 90.9, 'null'], symbol: 'circle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-LGG', type: 'line', lineStyle: { width: 3 }, data: [77.8, 81.2, 70.0, 'null'], symbol: 'triangle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-MAD', type: 'line', lineStyle: { width: 3 }, data: [72.5, 64.5, 65.0, 'null'], symbol: 'rect', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-NLU', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [100.0, 78.6, 64.3, 25.0], symbol: 'pin', symbolSize: 8, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'SZX-NLU', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [57.1, 25.0, 0.0, 'null'], symbol: 'diamond', symbolSize: 8, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'SZX-LGG', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: ['null', 'null', 'null', 'null'], symbol: 'rect', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'SZX-MAD', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: ['null', 'null', 'null', 'null'], symbol: 'diamond', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'CAN-LHR', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [0.0, 0.0, 0.0, 'null'], symbol: 'triangle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'CAN-JFK', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [0.0, 0.0, 16.7, 100.0], symbol: 'circle', symbolSize: 8, label: { show: true, formatter: '{c}%' } }
+    ]
+});
+
+var chart2b = echarts.init(document.getElementById('chart2_awb'));
+chart2b.setOption({
+    title: { text: '录单渗透率趋势', left: 'center', textStyle: { fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.filter(i=>i.value!=null).map(i=>i.seriesName+': '+i.value+'%').join('<br>'); } },
+    legend: { data: ["PVG-AMS", "PVG-LGG", "PVG-MAD", "PVG-NLU", "SZX-NLU", "SZX-LGG", "SZX-MAD", "CAN-LHR", "CAN-JFK"], bottom: 0 },
+    grid: { left: 50, right: 30, bottom: 50, top: 45 },
+    xAxis: { type: 'category', data: weeks },
+    yAxis: { type: 'value', name: '%', scale: true, min: 0, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: 'PVG-AMS', type: 'line', lineStyle: { width: 3 }, data: [82.4, 100.0, 100.0, 'null'], symbol: 'circle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-LGG', type: 'line', lineStyle: { width: 3 }, data: [96.3, 90.6, 95.0, 'null'], symbol: 'triangle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-MAD', type: 'line', lineStyle: { width: 3 }, data: [80.4, 92.5, 90.3, 'null'], symbol: 'rect', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-NLU', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [100.0, 92.9, 100.0, 100.0], symbol: 'pin', symbolSize: 8, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'SZX-NLU', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [100.0, 75.0, 100.0, 'null'], symbol: 'diamond', symbolSize: 8, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'SZX-LGG', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [46.2, 21.4, 0.0, 'null'], symbol: 'rect', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'SZX-MAD', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: ['null', 'null', 'null', 'null'], symbol: 'diamond', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'CAN-LHR', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [10.5, 11.1, 8.3, 'null'], symbol: 'triangle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'CAN-JFK', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [0.0, 40.0, 16.7, 100.0], symbol: 'circle', symbolSize: 8, label: { show: true, formatter: '{c}%' } }
+    ]
+});
+
+// ===== 图表3：成功率趋势 =====
+var chart3a = echarts.init(document.getElementById('chart3_booking'));
+chart3a.setOption({
+    title: { text: '订舱成功率趋势', left: 'center', textStyle: { fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.filter(i=>i.value!=null).map(i=>i.seriesName+': '+i.value+'%').join('<br>'); } },
+    legend: { data: ["PVG-AMS", "PVG-LGG", "PVG-MAD", "PVG-NLU", "SZX-NLU", "SZX-LGG", "SZX-MAD", "CAN-LHR", "CAN-JFK"], bottom: 0 },
+    grid: { left: 50, right: 30, bottom: 50, top: 45 },
+    xAxis: { type: 'category', data: weeks },
+    yAxis: { type: 'value', name: '%', scale: true, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: 'PVG-AMS', type: 'line', lineStyle: { width: 3 }, data: [56.0, 54.5, 86.4, 'null'], symbol: 'circle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-LGG', type: 'line', lineStyle: { width: 3 }, data: [65.5, 82.1, 81.2, 'null'], symbol: 'triangle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-MAD', type: 'line', lineStyle: { width: 3 }, data: [75.0, 91.8, 97.0, 'null'], symbol: 'rect', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-NLU', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [61.5, 58.8, 75.0, 100.0], symbol: 'pin', symbolSize: 8, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'SZX-NLU', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [16.7, 16.7, 0.0, 'null'], symbol: 'diamond', symbolSize: 8, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'SZX-LGG', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [0.0, 0.0, 0.0, 'null'], symbol: 'rect', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'SZX-MAD', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [0.0, 0.0, 0.0, 'null'], symbol: 'diamond', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'CAN-LHR', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [0.0, 0.0, 0.0, 'null'], symbol: 'triangle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'CAN-JFK', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [0.0, 0.0, 33.3, 100.0], symbol: 'circle', symbolSize: 8, label: { show: true, formatter: '{c}%' } }
+    ]
+});
+
+var chart3b = echarts.init(document.getElementById('chart3_awb'));
+chart3b.setOption({
+    title: { text: '录单成功率趋势', left: 'center', textStyle: { fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: function(p){ return p.filter(i=>i.value!=null).map(i=>i.seriesName+': '+i.value+'%').join('<br>'); } },
+    legend: { data: ["PVG-AMS", "PVG-LGG", "PVG-MAD", "PVG-NLU", "SZX-NLU", "SZX-LGG", "SZX-MAD", "CAN-LHR", "CAN-JFK"], bottom: 0 },
+    grid: { left: 50, right: 30, bottom: 50, top: 45 },
+    xAxis: { type: 'category', data: weeks },
+    yAxis: { type: 'value', name: '%', min: 0, max: 100, axisLabel: { formatter: '{value}%' } },
+    series: [
+        { name: 'PVG-AMS', type: 'line', lineStyle: { width: 3 }, data: [58.3, 80.8, 88.0, 'null'], symbol: 'circle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-LGG', type: 'line', lineStyle: { width: 3 }, data: [69.4, 84.8, 90.5, 'null'], symbol: 'triangle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-MAD', type: 'line', lineStyle: { width: 3 }, data: [80.0, 91.0, 97.7, 'null'], symbol: 'rect', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'PVG-NLU', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [61.5, 68.4, 77.8, 100.0], symbol: 'pin', symbolSize: 8, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'SZX-NLU', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [41.2, 46.2, 66.7, 'null'], symbol: 'diamond', symbolSize: 8, label: { show: true, formatter: '{c}%', position: 'bottom', fontSize: 10 } },
+        { name: 'SZX-LGG', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [21.4, 25.0, 0.0, 'null'], symbol: 'rect', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'SZX-MAD', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [0.0, 0.0, 0.0, 'null'], symbol: 'diamond', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'CAN-LHR', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [16.7, 28.6, 50.0, 'null'], symbol: 'triangle', symbolSize: 8, label: { show: true, formatter: '{c}%' } },
+        { name: 'CAN-JFK', type: 'line', lineStyle: { width: 2, type: 'dashed' }, data: [0.0, 0.0, 33.3, 0.0], symbol: 'circle', symbolSize: 8, label: { show: true, formatter: '{c}%' } }
+    ]
+});
+
+// ===== 图表4-11：各航线任务数柱状图 =====
+function createBarChart(domId, title, bookingAi, awbAi, bookingDone, awbDone, gosData) {
+    var chart = echarts.init(document.getElementById(domId));
+    chart.setOption({
+        title: { text: title, left: 'center', textStyle: { fontSize: 14 } },
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['订舱自动化任务数','录单自动化任务数','订舱自动化成功数','录单自动化成功数','GOS单量(主单号数)'], bottom: 0 },
+        grid: { left: 50, right: 30, bottom: 55, top: 45 },
+        xAxis: { type: 'category', data: ["8.10-8.16", "8.17-8.23", "8.24-8.30", "8.31-9.6", "9.7-9.13"] },
+        yAxis: { type: 'value', name: '单量/任务数' },
+        series: [
+            { name: '订舱自动化任务数', type: 'bar', data: bookingAi, itemStyle: { color: '#4472C4' }, label: { show: true, position: 'top', fontSize: 9 } },
+            { name: '录单自动化任务数', type: 'bar', data: awbAi, itemStyle: { color: '#70AD47' }, label: { show: true, position: 'top', fontSize: 9 } },
+            { name: '订舱自动化成功数', type: 'bar', data: bookingDone, itemStyle: { color: '#2E5395' }, label: { show: true, position: 'top', fontSize: 9 } },
+            { name: '录单自动化成功数', type: 'bar', data: awbDone, itemStyle: { color: '#4E8A2F' }, label: { show: true, position: 'top', fontSize: 9 } },
+            { name: 'GOS单量(主单号数)', type: 'bar', data: gosData, itemStyle: { color: '#FFC000' }, label: { show: true, position: 'top', fontSize: 9 } }
+        ]
+    });
+    return chart;
+}
+
+function createBarChartX1(domId, title, awbAi, awbDone, gosData) {
+    var chart = echarts.init(document.getElementById(domId));
+    chart.setOption({
+        title: { text: title, left: 'center', textStyle: { fontSize: 14 } },
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['录单自动化任务数','录单自动化成功数','GOS单量(主单号数)'], bottom: 0 },
+        grid: { left: 50, right: 30, bottom: 55, top: 45 },
+        xAxis: { type: 'category', data: ["8.10-8.16", "8.17-8.23", "8.24-8.30", "8.31-9.6", "9.7-9.13"] },
+        yAxis: { type: 'value', name: '单量/任务数' },
+        series: [
+            { name: '录单自动化任务数', type: 'bar', data: awbAi, itemStyle: { color: '#70AD47' }, label: { show: true, position: 'top', fontSize: 9 } },
+            { name: '录单自动化成功数', type: 'bar', data: awbDone, itemStyle: { color: '#4E8A2F' }, label: { show: true, position: 'top', fontSize: 9 } },
+            { name: 'GOS单量(主单号数)', type: 'bar', data: gosData, itemStyle: { color: '#FFC000' }, label: { show: true, position: 'top', fontSize: 9 } }
+        ]
+    });
+    return chart;
+}
+
+var c0 = createBarChart('chart_bar_0', 'PVG-AMS 任务数', [16, 14, 6, 20, 0], [16, 14, 21, 22, 0], [15, 14, 6, 19, 0], [16, 14, 21, 22, 0], [16, 17, 21, 22, 0]);
+var c1 = createBarChart('chart_bar_1', 'PVG-LGG 任务数', [36, 21, 26, 14, 0], [32, 26, 29, 19, 0], [35, 19, 23, 13, 0], [29, 25, 28, 19, 0], [41, 27, 32, 20, 0]);
+var c2 = createBarChart('chart_bar_2', 'PVG-MAD 任务数', [45, 37, 60, 67, 0], [88, 41, 86, 93, 0], [41, 33, 56, 65, 0], [84, 40, 81, 86, 0], [123, 51, 93, 103, 0]);
+var c3 = createBarChart('chart_bar_3', 'PVG-NLU 任务数', [0, 16, 11, 9, 1], [14, 16, 13, 14, 4], [0, 16, 10, 9, 1], [14, 16, 13, 14, 4], [17, 16, 14, 14, 4]);
+var c4 = createBarChart('chart_bar_4', 'SZX-NLU 任务数', [0, 4, 2, 0, 0], [10, 7, 6, 4, 0], [0, 2, 1, 0, 0], [10, 7, 6, 4, 0], [15, 7, 8, 4, 0]);
+var c5 = createBarChartX1('chart_bar_5', 'SZX-LGG 任务数', [0, 6, 3, 0, 0], [0, 3, 2, 0, 0], [12, 13, 14, 9, 0]);
+var c6 = createBarChart('chart_bar_6', 'CAN-LHR 任务数', [0, 0, 0, 0, 0], [1, 2, 2, 2, 0], [0, 0, 0, 0, 0], [0, 2, 2, 2, 0], [17, 19, 18, 24, 0]);
+var c7 = createBarChart('chart_bar_7', 'CAN-JFK 任务数', [0, 0, 0, 1, 1], [0, 0, 2, 1, 1], [0, 0, 0, 1, 1], [0, 0, 0, 1, 0], [5, 5, 5, 6, 1]);
+
+
+window.addEventListener('resize', function() { chart1.resize(); chartMonthlyRates.resize(); chart2a.resize(); chart2b.resize(); chart3a.resize(); chart3b.resize(); chart_bar_0.resize(); chart_bar_1.resize(); chart_bar_2.resize(); chart_bar_3.resize(); chart_bar_4.resize(); chart_bar_5.resize(); chart_bar_6.resize(); chart_bar_7.resize(); });
+</script>
+</body>
+</html>
